@@ -1,0 +1,69 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  JUCE_VERSION: 8.0.4
+
+jobs:
+  macos:
+    name: macOS (AU + VST3 + Standalone, universal)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar JUCE
+        run: git clone --depth 1 --branch "$JUCE_VERSION" https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Configurar
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DYOINK_COPY_AFTER_BUILD=OFF
+
+      - name: Compilar
+        run: cmake --build build --config Release --target Yoink_AU Yoink_VST3 Yoink_Standalone YoinkTests -j 4
+
+      - name: Tests del motor
+        run: |
+          T=$(find build -name YoinkTests -type f -perm -u+x | head -1)
+          "$T"
+
+      - name: Validar AU (auval)
+        run: |
+          AU=$(find build -name "Yoink.component" -type d | head -1)
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "$AU" ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          auval -v aumu Yonk O6mu
+
+      - name: Firmar (ad-hoc) y empaquetar
+        run: |
+          set -e
+          mkdir -p dist
+          AU=$(find build -name "Yoink.component" -type d | head -1)
+          VST=$(find build -name "Yoink.vst3" -type d | head -1)
+          APP=$(find build -name "Yoink.app" -type d | head -1)
+          for B in "$AU" "$VST" "$APP"; do codesign --force --deep --sign - "$B"; done
+          lipo -info "$VST/Contents/MacOS/Yoink"
+          cp -R "$AU" "$VST" "$APP" dist/
+          cp README.md dist/
+          cp Instalador/Instalar.command Instalador/Desinstalar.command dist/
+          chmod +x dist/*.command
+          cd dist && ditto -c -k --keepParent . ../Yoink-macOS.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Yoink-macOS
+          path: Yoink-macOS.zip
+
+      - name: Publicar release (en tags v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Yoink-macOS.zip
