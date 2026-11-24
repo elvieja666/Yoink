@@ -172,7 +172,8 @@ inline LibraryStats libraryStats()
     }
     if (clipsDir().isDirectory())
         s.clips = clipsDir().getNumberOfChildFiles (juce::File::findFiles, "*.wav");
-    if (auto* arr = readSources()["sources"].getArray())
+    const auto reg = readSources();   // mantener vivo el var: getArray() apunta adentro
+    if (auto* arr = reg["sources"].getArray())
         s.sources = arr->size();
     return s;
 }

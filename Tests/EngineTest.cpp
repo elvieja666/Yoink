@@ -122,7 +122,6 @@ int main()
     CHECK (clock (3725.25) == "01:02:05.250");
     CHECK (slug (juce::String::fromUTF8 ("\xc2\xa1No puede SER! \xc3\xb1" "and\xc3\xba")) == "no-puede-ser-nandu");
     CHECK (slug ("???") == "yoink");
-    std::cerr << "  slug=" << slug (juce::String::fromUTF8 ("\xc2\xa1No puede SER! \xc3\xb1" "and\xc3\xba")) << "\n";
 
     // --- json3 y pistas
     {
@@ -152,8 +151,6 @@ int main()
     addSource ("https://www.youtube.com/@canal", { "aaaaaaaaaaa" });
     addSource ("https://www.youtube.com/@canal", { "aaaaaaaaaaa" });
     CHECK (libraryStats().sources == 1);
-    if (libraryStats().sources != 1)
-        std::cerr << "  sources.json existe=" << sourcesFile().existsAsFile() << " contenido=" << sourcesFile().loadFileAsString() << "\n";
 
     // --- procesos
     {
