@@ -16,7 +16,7 @@ env:
 jobs:
   macos:
     name: macOS (AU + VST3 + Standalone, universal)
-    runs-on: macos-15
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
 
