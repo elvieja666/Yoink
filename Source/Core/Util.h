@@ -86,9 +86,11 @@ inline juce::String slug (const juce::String& label)
     static const char* fold = "aaaaaaaceeeeiiii" "dnooooo*ouuuuy*s" "aaaaaaaceeeeiiii" "dnooooo*ouuuuy*y";
     juce::String out;
     bool dash = false;
-    for (auto p = label.toLowerCase().getCharPointer(); ! p.isEmpty(); ++p)
+    for (auto p = label.getCharPointer(); ! p.isEmpty(); ++p)
     {
-        auto c = *p;
+        auto c = (juce::juce_wchar) *p;
+        if (c >= 'A' && c <= 'Z')
+            c += 32;
         if (c >= 0xC0 && c <= 0xFF && fold[c - 0xC0] != '*')
             c = (juce::juce_wchar) fold[c - 0xC0];
 
