@@ -52,6 +52,8 @@ public:
     double clipLength = 4.0;
     double clipOffset = -0.5;
     juce::String lastQuery, lastSource;
+    bool searchAllYouTube = true;
+    int youtubeCandidates = 40;
 
     static constexpr int rootNote = 60;
 

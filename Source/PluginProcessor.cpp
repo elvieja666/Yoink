@@ -130,6 +130,8 @@ void YoinkProcessor::getStateInformation (juce::MemoryBlock& dest)
     state.setProperty ("clipOffset", clipOffset, nullptr);
     state.setProperty ("lastQuery", lastQuery, nullptr);
     state.setProperty ("lastSource", lastSource, nullptr);
+    state.setProperty ("searchAllYouTube", searchAllYouTube, nullptr);
+    state.setProperty ("youtubeCandidates", youtubeCandidates, nullptr);
     if (auto xml = state.createXml())
         copyXmlToBinary (*xml, dest);
 }
@@ -145,6 +147,8 @@ void YoinkProcessor::setStateInformation (const void* data, int size)
     clipOffset = (double) state.getProperty ("clipOffset", -0.5);
     lastQuery = state.getProperty ("lastQuery").toString();
     lastSource = state.getProperty ("lastSource").toString();
+    searchAllYouTube = (bool) state.getProperty ("searchAllYouTube", true);
+    youtubeCandidates = (int) state.getProperty ("youtubeCandidates", 40);
 
     auto path = state.getProperty ("clip").toString();
     if (path.isNotEmpty() && juce::File::isAbsolutePath (path) && juce::File (path).existsAsFile())

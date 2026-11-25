@@ -272,11 +272,12 @@ struct Entry
 inline std::vector<Entry> listEntries (const juce::File& ytDlp, const juce::String& url, int limit,
                                        const std::atomic<bool>* cancel, juce::String& error)
 {
-    auto direct = parseVideoId (url);
+    const bool isSearch = url.startsWith ("ytsearch");
+    auto direct = isSearch ? juce::String() : parseVideoId (url);
     if (direct.isNotEmpty() && ! url.contains ("list="))
         return { { direct, {}, {} } };
 
-    auto target = normalizeSourceUrl (url);
+    auto target = isSearch ? url : normalizeSourceUrl (url);
     auto res = run ({ ytDlp.getFullPathName(), "-J", "--flat-playlist", "--playlist-end", juce::String (limit),
                       "--no-warnings", target },
                     240000, cancel);
@@ -293,7 +294,8 @@ inline std::vector<Entry> listEntries (const juce::File& ytDlp, const juce::Stri
 
     if (! payload.isObject())
     {
-        error = "yt-dlp no pudo expandir " + url + ": " + res.lastLine();
+        error = (isSearch ? yoink::T8 ("la búsqueda en YouTube falló: ") : "yt-dlp no pudo expandir " + url + ": ")
+              + res.lastLine();
         return {};
     }
 
@@ -311,6 +313,16 @@ inline std::vector<Entry> listEntries (const juce::File& ytDlp, const juce::Stri
     else
         add (payload);
     return out;
+}
+
+/** Candidatos del buscador de YouTube para una frase (entre comillas: busca la frase exacta). */
+inline std::vector<Entry> searchYouTube (const juce::File& ytDlp, const juce::String& phrase, int count,
+                                         const std::atomic<bool>* cancel, juce::String& error)
+{
+    auto clean = phrase.removeCharacters ("\"").trim();
+    if (clean.isEmpty())
+        return {};
+    return listEntries (ytDlp, "ytsearch" + juce::String (count) + ":\"" + clean + "\"", count, cancel, error);
 }
 
 } // namespace yoink

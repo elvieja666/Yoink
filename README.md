@@ -16,10 +16,15 @@ frase exacta, recorte con yt-dlp + ffmpeg.
 
 ## Uso
 
-1. **Fuente** — pegá la URL de un video, playlist o canal y tocá **Indexar**. Se bajan los
-   subtítulos (manuales o automáticos) y quedan en el índice; los ya indexados se saltean.
-2. **Frase** — escribí lo que dice alguien y Enter. Las frases exactas salen primero; no
-   importan tildes, mayúsculas ni puntuación.
+1. **Frase** — escribí lo que dice alguien y Enter.
+   - Con **Todo YouTube** prendido (por defecto): Yoink le pasa la frase al buscador de
+     YouTube, toma los primeros 20/40/80 videos, les baja los subtítulos en paralelo y te
+     muestra el segundo exacto donde se dice. Los resultados aparecen a medida que revisa.
+     Todo lo que baja queda en tu índice.
+   - Con **Todo YouTube** apagado: busca solo en tu índice local (instantáneo, sin red).
+   - No importan tildes, mayúsculas ni puntuación. Las frases exactas salen primero.
+2. **Fuente** (opcional) — pegá la URL de un video, playlist o canal y tocá **Indexar**
+   para sumar material propio al índice.
 3. **Yoink!** (o doble clic en un resultado) — baja solo ese tramo y lo corta a WAV
    48 kHz / 24 bit / estéreo en `~/Yoink`.
    - *Duración*: largo del clip. *Desfase*: los subtítulos marcan el segundo redondeado,
@@ -58,7 +63,9 @@ tests y `auval`, firma ad-hoc y sube el zip.
 ## Límites
 
 - Solo sirven videos con subtítulos (manuales o automáticos); no hay reconocimiento de voz local.
-- Una frase solo aparece si el video que la contiene fue indexado.
+- "Todo YouTube" depende del buscador de YouTube: si el video que dice tu frase no sale
+  entre los primeros candidatos, no aparece. Más candidatos = más lento pero más chances.
+  No existe una forma pública de buscar en el audio de *todos* los videos.
 - Los subtítulos automáticos se equivocan: si no encontrás algo, probá menos palabras.
 - Bajar audio de YouTube puede ir contra sus términos de uso; usalo con material que tengas
   derecho a samplear.

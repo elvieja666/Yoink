@@ -67,7 +67,7 @@ inline bool writeJson (const juce::File& file, const juce::var& value)
 {
     file.getParentDirectory().createDirectory();
     juce::TemporaryFile tmp (file);
-    if (! tmp.getFile().replaceWithText (juce::JSON::toString (value) + "\n"))
+    if (! tmp.getFile().replaceWithText (juce::JSON::toString (value) + "\n", false, false, "\n"))
         return false;
     return tmp.overwriteTargetFileWithTemporary();
 }
@@ -84,6 +84,14 @@ inline juce::File recordFile (const juce::String& videoId) { return indexDir().g
 inline bool hasRecord (const juce::String& videoId)
 {
     return recordFile (videoId).existsAsFile() || legacyIndexDir().getChildFile (videoId + ".json").existsAsFile();
+}
+
+inline bool loadRecord (const juce::String& videoId, Record& r)
+{
+    for (auto dir : { indexDir(), legacyIndexDir() })
+        if (Record::fromVar (readJson (dir.getChildFile (videoId + ".json")), r))
+            return true;
+    return false;
 }
 
 inline bool saveRecord (const Record& r) { return writeJson (recordFile (r.videoId), r.toVar()); }

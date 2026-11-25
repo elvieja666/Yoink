@@ -123,8 +123,8 @@ YoinkEditor::YoinkEditor (YoinkProcessor& p)
     title.setFont (juce::FontOptions (26.0f, juce::Font::bold));
     styleLabel (stats, "", 12.0f);
     stats.setJustificationType (juce::Justification::centredRight);
-    styleLabel (sourceLabel, yoink::T8 ("1 · Fuente"));
-    styleLabel (queryLabel, yoink::T8 ("2 · Frase"));
+    styleLabel (sourceLabel, "Fuente");
+    styleLabel (queryLabel, "Frase");
     styleLabel (lengthLabel, yoink::T8 ("Duración (s)"));
     styleLabel (offsetLabel, "Desfase (s)");
     styleLabel (statusLabel, "", 13.0f, ui::text);
@@ -140,6 +140,23 @@ YoinkEditor::YoinkEditor (YoinkProcessor& p)
     for (int n : { 1, 5, 10, 20, 40 })
         limitBox.addItem ("hasta " + juce::String (n), n);
     limitBox.setSelectedId (10, juce::dontSendNotification);
+    youtubeToggle.setButtonText ("Todo YouTube");
+    youtubeToggle.setToggleState (processor.searchAllYouTube, juce::dontSendNotification);
+    youtubeToggle.setColour (juce::ToggleButton::tickColourId, ui::accent);
+    youtubeToggle.setTooltip (yoink::T8 ("Prendido: busca en YouTube y revisa los subtítulos de los videos que encuentra. Apagado: solo en tu índice."));
+    youtubeToggle.onClick = [this]
+    {
+        processor.searchAllYouTube = youtubeToggle.getToggleState();
+        candBox.setEnabled (processor.searchAllYouTube);
+    };
+    for (int n : { 20, 40, 80 })
+        candBox.addItem (juce::String (n) + " videos", n);
+    candBox.setSelectedId (processor.youtubeCandidates, juce::dontSendNotification);
+    if (candBox.getSelectedId() == 0) candBox.setSelectedId (40, juce::dontSendNotification);
+    candBox.setTooltip (yoink::T8 ("Cuántos videos del buscador de YouTube revisar (más = más lento, más chances)"));
+    candBox.onChange = [this] { processor.youtubeCandidates = candBox.getSelectedId(); };
+    candBox.setEnabled (processor.searchAllYouTube);
+
     limitBox.setTooltip (yoink::T8 ("Cuántos videos tomar de una playlist o canal"));
 
     indexBtn.onClick = [this] { doIndex(); };
@@ -191,7 +208,7 @@ YoinkEditor::YoinkEditor (YoinkProcessor& p)
     list.setOutlineThickness (1);
 
     for (juce::Component* c : std::initializer_list<juce::Component*> {
-             &title, &stats, &sourceLabel, &queryLabel, &sourceEdit, &limitBox, &indexBtn, &queryEdit, &searchBtn,
+             &title, &stats, &sourceLabel, &queryLabel, &sourceEdit, &limitBox, &indexBtn, &queryEdit, &searchBtn, &youtubeToggle, &candBox,
              &list, &hint, &lengthLabel, &lengthSlider, &offsetLabel, &offsetSlider, &ytBtn, &grabBtn, &clipView,
              &playBtn, &stopBtn, &revealBtn, &folderBtn, &gainKnob, &attackKnob, &releaseKnob, &gainLabel,
              &attackLabel, &releaseLabel, &statusLabel, &cancelBtn, &updateBtn })
@@ -250,6 +267,10 @@ void YoinkEditor::resized()
     row = r.removeFromTop (34);
     queryLabel.setBounds (row.removeFromLeft (80));
     searchBtn.setBounds (row.removeFromRight (100));
+    row.removeFromRight (6);
+    candBox.setBounds (row.removeFromRight (110));
+    row.removeFromRight (6);
+    youtubeToggle.setBounds (row.removeFromRight (124));
     row.removeFromRight (6);
     queryEdit.setBounds (row);
 
@@ -339,7 +360,10 @@ void YoinkEditor::doIndex()
 void YoinkEditor::doSearch()
 {
     processor.lastQuery = queryEdit.getText().trim();
-    processor.engine.search (processor.lastQuery);
+    if (processor.searchAllYouTube)
+        processor.engine.searchYouTube (processor.lastQuery, processor.youtubeCandidates);
+    else
+        processor.engine.search (processor.lastQuery);
 }
 
 void YoinkEditor::grab (int row)
@@ -366,6 +390,7 @@ void YoinkEditor::syncFromEngine()
     statusLabel.setColour (juce::Label::textColourId, s.isError ? ui::error : (s.busy ? ui::accent : ui::text));
     cancelBtn.setEnabled (s.busy);
     indexBtn.setEnabled (! s.busy);
+    searchBtn.setEnabled (! s.busy);
     grabBtn.setEnabled (! s.busy);
     updateBtn.setEnabled (! s.busy);
 

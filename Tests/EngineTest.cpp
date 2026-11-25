@@ -14,7 +14,7 @@ static std::string utf8 (const std::u32string& s)
 
 #include "Core/Search.h"
 #include "Core/Captions.h"
-#include "Core/Grab.h"
+#include "Core/Engine.h"
 
 using namespace yoink;
 
@@ -158,6 +158,48 @@ int main()
         CHECK (r.started && r.code == 3 && r.lastLine() == "ERROR: algo");
         auto slow = run ({ "/bin/sleep", "5" }, 300);
         CHECK (slow.timedOut);
+    }
+
+
+    // --- "Todo YouTube" de punta a punta con un yt-dlp falso (sin red)
+    {
+        juce::ScopedJuceInitialiser_GUI gui;
+        auto fake = dir.getChildFile ("fake-yt-dlp");
+        fake.replaceWithText (R"SH(#!/bin/sh
+case "$*" in
+  *ytsearch*) echo 'WARNING: algo'; echo '{"entries":[{"id":"ddddddddddd","title":"Video D"},{"id":"eeeeeeeeeee","title":"Video E"},{"id":"aaaaaaaaaaa","title":"Ya indexado"}]}' ;;
+  *write-subs*)
+    out=""; prev=""; for a in "$@"; do [ "$prev" = "-o" ] && out="$a"; prev="$a"; done
+    d=$(dirname "$out")
+    case "$*" in
+      *ddddddddddd*) echo '{"events":[{"tStartMs":12000,"segs":[{"utf8":"y entonces no puede ser"}]},{"tStartMs":15000,"segs":[{"utf8":"dijo"}]}]}' > "$d/ddddddddddd.es.json3" ;;
+      *) echo 'ERROR: sin subs' ;;
+    esac ;;
+esac
+)SH", false, false, "\n");
+        fake.setExecutePermission (true);
+        setenv ("YOINK_YTDLP", fake.getFullPathName().toRawUTF8(), 1);
+
+        Engine engine;
+        engine.searchYouTube ("no puede ser", 20);
+        for (int i = 0; i < 300; ++i)
+        {
+            juce::Thread::sleep (50);
+            auto snap = engine.snapshot();
+            if (! snap.busy && snap.status.contains ("YouTube") && ! snap.status.startsWith ("Buscando")
+                && ! snap.status.startsWith ("Revisando"))
+                break;
+        }
+        auto snap = engine.snapshot();
+        std::cerr << "  estado: " << snap.status << "\n";
+        CHECK (snap.hits.size() == 1);
+        if (! snap.hits.empty())
+        {
+            CHECK (snap.hits[0].videoId == "ddddddddddd" && snap.hits[0].start == 12 && snap.hits[0].kind == "frase");
+            CHECK (snap.hits[0].title == "Video D");
+        }
+        CHECK (hasRecord ("ddddddddddd"));
+        CHECK (! hasRecord ("eeeeeeeeeee"));
     }
 
     dir.deleteRecursively();

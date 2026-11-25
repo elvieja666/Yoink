@@ -66,7 +66,8 @@ private:
 
     juce::Label title, stats, sourceLabel, queryLabel, lengthLabel, offsetLabel, statusLabel, hint;
     juce::TextEditor sourceEdit, queryEdit;
-    juce::ComboBox limitBox;
+    juce::ComboBox limitBox, candBox;
+    juce::ToggleButton youtubeToggle;
     juce::TextButton indexBtn { "Indexar" }, searchBtn { "Buscar" }, grabBtn { "Yoink!" }, ytBtn { "Ver en YouTube" },
                      playBtn { "Escuchar" }, stopBtn { "Parar" }, revealBtn { "Mostrar en Finder" },
                      cancelBtn { "Cancelar" }, updateBtn { "Actualizar yt-dlp" }, folderBtn { "Carpeta de clips" };
